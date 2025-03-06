@@ -1,0 +1,9 @@
+androidSDKPath: /mnt/c/Users/osas2/AppData/Local/Android/Sdk
+pythonScriptsPath: /mnt/c/Users/osas2/Documents/avt/trace-replayer/lib/python-scripts
+aaptPath: /mnt/c/Users/osas2/AppData/Local/Android/Sdk/build-tools/35.0.0
+apkPath: /mnt/c/Users/osas2/Documents/avt/apks/klar-125.3.0-x86.apk
+getEventFile: /mnt/c/Users/osas2/Documents/avt/traces/[02.09.20]getevent.log
+outputFolder: /mnt/c/Users/osas2/Documents/avt/output
+avdPort: 5554
+adbPort: 5037
+executionNum: 1

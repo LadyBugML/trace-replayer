@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>hierarchyviewer</groupId>
+  <artifactId>hierarchyviewer</artifactId>
+  <versioning>
+    <release>x.y.z</release>
+    <versions>
+      <version>x.y.z</version>
+    </versions>
+    <lastUpdated>20250219063733</lastUpdated>
+  </versioning>
+</metadata>
