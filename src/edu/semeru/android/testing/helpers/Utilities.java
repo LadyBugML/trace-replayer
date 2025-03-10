@@ -35,6 +35,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -78,6 +79,7 @@ public class Utilities {
     // consts for determining click size or long clicks
     public static double LONG_CLICK_DURATION = 0.5;
     public static int CLICK_RING = 20;
+    public static boolean IS_OS_UNIX = SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC;
 
     public static void main(String[] args) throws IOException, JadbException, InterruptedException {
         try {
@@ -288,12 +290,13 @@ public class Utilities {
             Runtime rt = Runtime.getRuntime();
             System.out.println("--- Getting screenshot:" + name);
             rt.exec(androidToolsPath + File.separator + "adb shell /system/bin/screencap -p /sdcard/screen.png")
-                    .waitFor();
+                .waitFor();
+
             Thread.sleep(2000);
+
             System.out.println("--- Pulling screenshot:" + name);
             rt.exec(androidToolsPath + File.separator + "adb pull /sdcard/screen.png " + outputFolder + File.separator
                     + name).waitFor();
-
         } catch (Exception ex) {
             Logger.getLogger(StepByStepEngine.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -319,9 +322,14 @@ public class Utilities {
 
             System.out.println("-- Getting logcat");
             String androidToolsPath = androidSDKPath + File.separator + "platform-tools";
-
-            Process proc = rt.exec(new String[] { "/bin/sh", "-c", androidToolsPath + File.separator
+            Process proc;
+            if (IS_OS_UNIX) {
+                proc = rt.exec(new String[] { "/bin/sh", "-c", androidToolsPath + File.separator
                     + "adb shell logcat -d  | grep 'SOOT:<' | grep '" + packageName + "'" });
+            } else {
+                proc = rt.exec(new String[] { "PowerShell", "-c", androidToolsPath + File.separator
+                    + "adb shell logcat -d  | findstr 'SOOT:<' | findstr '" + packageName + "'" });
+            }
 
             BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
             String line = null;
@@ -345,12 +353,12 @@ public class Utilities {
 
             Runtime rt = Runtime.getRuntime();
             Process proc;
-            if(SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_LINUX) {
+            if(IS_OS_UNIX) {
                 proc = rt.exec(new String[] { "/bin/sh", "-c", androidToolsPath + File.separator
                     + "adb shell dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp'" });
             } else {
-                proc = rt.exec(new String[] {"/bin/sh", "-c", androidToolsPath + File.separator
-                    + "adb shell dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp'" });
+                proc = rt.exec(new String[] {"PowerShell", "-c", androidToolsPath + File.separator
+                    + "adb shell dumpsys window windows | findstr 'mCurrentFocus|mFocusedApp'" });
             }
             BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
             String line = null;
@@ -411,7 +419,7 @@ public class Utilities {
 
         String command = "";
         
-        if (SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_LINUX) {
+        if (IS_OS_UNIX) {
             if(getAndroidVersion(androidSDKPath).equals("9") || getAndroidVersion(androidSDKPath).equals("10")) {
                 command = androidToolsPath + File.separator + "adb " + device + " shell wm size | awk '{ print $3 }'";
             } else {
@@ -420,7 +428,7 @@ public class Utilities {
             }
         } else {
             if(getAndroidVersion(androidSDKPath).equals("9") || getAndroidVersion(androidSDKPath).equals("10")) {
-                command = androidToolsPath + File.separator + "adb " + device + " shell wm size | ForEach-Object{($_ -split '\\s+')[2]}'";
+                command = androidToolsPath + File.separator + "adb " + device + " shell wm size | ForEach-Object{($_ -split '\\s+')[2]}";
             } else {
                 command = androidToolsPath + File.separator + "adb " + device + "shell dumpsys window | "
                         + "findstr 'mUnrestrictedScreen' ";
@@ -526,7 +534,7 @@ public class Utilities {
             Runtime rt = Runtime.getRuntime();
             
             Process proc;
-            if (SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_LINUX) {
+            if (IS_OS_UNIX) {
                 if(getAndroidVersion(androidSDKPath).equals("9") || getAndroidVersion(androidSDKPath).equals("10")) {
                     proc = rt.exec(new String[] { "/bin/sh", "-c", androidToolsPath + "adb " + device
                             + " shell wm size | awk '{ print $3 }'" });
@@ -556,8 +564,14 @@ public class Utilities {
         try {
             String androidToolsPath = androidSDKPath + File.separator + "platform-tools" + File.separator;
             Runtime rt = Runtime.getRuntime();
-            Process proc = rt.exec(new String[] { "/bin/sh", "-c",
+            Process proc;
+            if (IS_OS_UNIX) {
+                proc = rt.exec(new String[] { "/bin/sh", "-c",
                     androidToolsPath + "adb shell dumpsys package " + appPackage + " | grep versionName" });
+            } else {
+                proc = rt.exec(new String[] { "PowerShell", "-c",
+                    androidToolsPath + "adb shell dumpsys package " + appPackage + " | findstr versionName" });
+            }
             proc.waitFor();
             String version = getStringFromInputStream(proc.getInputStream());
             return version.substring(version.indexOf("=") + 1, version.length()).trim();
@@ -616,11 +630,18 @@ public class Utilities {
                     + outputFolder + File.separator + "ptrace_" + label).waitFor();
 
             System.out.println("-- Translating profiler trace");
-
-            Process proc = rt.exec(new String[] { "/bin/sh", "-c",
-                    "grep -E \"^0x[a-z0-9]{8}\\s+\" " + outputFolder + File.separator + "ptrace_" + label
-                            + "| awk '{print $2,$3,$4 }' | sed 's/ /./g' | sed 's/$[0-9]*//g' | grep -E '"
-                            + appPackageName + "'" });
+            Process proc;
+            if(IS_OS_UNIX) {
+                proc = rt.exec(new String[] { "/bin/sh", "-c",
+                        "grep -E \"^0x[a-z0-9]{8}\\s+\" " + outputFolder + File.separator + "ptrace_" + label
+                                + "| awk '{print $2,$3,$4 }' | sed 's/ /./g' | sed 's/$[0-9]*//g' | grep -E '"
+                                + appPackageName + "'" });
+            } else {
+                proc = rt.exec(new String[] { "PowerShell", "-c",
+                        "findstr \"^0x[a-z0-9]{8}\\s+\" " + outputFolder + File.separator + "ptrace_" + label
+                                + "| ForEach-Object{($_ -split '\\s+')[2,3,4]}' | Foreach-Object{$_ -replace ' ', '.'} | Foreach-Object{$_ -replace '$[0-9]*', ''} | findstr '"
+                                + appPackageName + "'" });
+            }
             BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
             System.out.println("ERROR: " + getStringFromInputStream(proc.getErrorStream()));
             String line = null;
@@ -776,7 +797,8 @@ public class Utilities {
 
         String command = androidToolsPath + File.separator + "adb" + deviceConnect + " shell dumpsys window windows";
         String test = TerminalHelper.executeCommand(command).trim();
-        String[] lines = test.split(System.getProperty("line.separator"));
+        String[] lines = test.split("\n");
+        //String[] lines = test.split(System.getProperty("line.separator"));
         String activityLine = "";
 
         for (String activityTest : lines) {
@@ -787,7 +809,6 @@ public class Utilities {
             }
         }
 
-        // System.out.println(test);
         String[] result = activityLine.split("\n");
         String activity1 = null;
         String activity2 = null;
@@ -866,7 +887,7 @@ public class Utilities {
         try {
             Runtime rt = Runtime.getRuntime();
             Process proc;
-            if (SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_LINUX ){
+            if (IS_OS_UNIX){
                 proc = rt.exec(new String[] { "/bin/sh", "-c",
                     adb + " " + device + "shell dumpsys input | grep 'SurfaceOrientation' |  awk '{ print $2 }'" });
             } else {
@@ -1086,12 +1107,23 @@ public class Utilities {
             device = "-s " + device + " ";
         }
         String androidToolsPath = androidSDKPath + File.separator + "platform-tools";
-        String command = androidToolsPath + File.separator + "adb " + device
-                + "shell dumpsys input_method|grep mInputShown| awk '{print $4 }'";
+        String command;
+        if (IS_OS_UNIX) {
+            command = androidToolsPath + File.separator + "adb " + device
+                + "shell dumpsys input_method | grep mInputShown | awk '{print $4 }'";
+        } else {
+            command = androidToolsPath + File.separator + "adb " + device
+                + "shell dumpsys input_method | findstr mInputShown | ForEach-Object{($_ -split '\\s+')[3]}";
+        }
         Runtime rt = Runtime.getRuntime();
         Process proc;
         try {
-            proc = rt.exec(new String[] { "/bin/sh", "-c", command });
+            if (IS_OS_UNIX) {
+                proc = rt.exec(new String[] { "/bin/sh", "-c", command });
+            } else {
+                proc = rt.exec(new String[] { "PowerShell", "-c", command });
+            }
+            
             String line = getStringFromInputStream(proc.getInputStream());
             proc.waitFor();
             if (line != null && !line.isEmpty() && line.contains("true")) {
@@ -1120,7 +1152,11 @@ public class Utilities {
         Runtime rt = Runtime.getRuntime();
         Process proc;
         try {
-            proc = rt.exec(new String[] { "/bin/sh", "-c", command });
+            if (IS_OS_UNIX) {
+                proc = rt.exec(new String[] { "/bin/sh", "-c", command });
+            } else {
+                proc = rt.exec(new String[] { "PowerShell", "-c", command });
+            }
             proc.waitFor();
         } catch (IOException e) {
             e.printStackTrace();
@@ -1328,17 +1364,29 @@ public class Utilities {
         
         String command = "";
         String result = "";
-        if (getAndroidVersion(androidSDKPath).equals("10")) {
-        	command = androidToolsPath + File.separator + "adb" + deviceConnect
-        			+ " shell dumpsys activity | grep -E 'mResumedActivity' | awk '{print $4 }'";
-        	result = TerminalHelper.executeCommand(command).replace("/", "");
+        if (IS_OS_UNIX) {
+            if (getAndroidVersion(androidSDKPath).equals("10")) {
+                command = androidToolsPath + File.separator + "adb" + deviceConnect
+                        + " shell dumpsys activity | grep -E 'mResumedActivity' | awk '{print $4 }'";
+                result = TerminalHelper.executeCommand(command).replace("/", "");
+            } else {
+                command = androidToolsPath + File.separator + "adb" + deviceConnect
+                    + " shell dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp' | awk '{print $3 }'";
+                result = TerminalHelper.executeCommand(command).split("\n")[0];
+                result = result.substring(0, result.length() - 1);
+            }
         } else {
-        	command = androidToolsPath + File.separator + "adb" + deviceConnect
-                + " shell dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp' | awk '{print $3 }'";
-        	result = TerminalHelper.executeCommand(command).split("\n")[0];
-            result = result.substring(0, result.length() - 1);
+            if (getAndroidVersion(androidSDKPath).equals("10") || getAndroidVersion(androidSDKPath).equals("7.0")) {
+                command = androidToolsPath + File.separator + "adb" + deviceConnect
+                        + " shell dumpsys activity | findstr 'mResumedActivity' | ForEach-Object{($_ -split '\\s+')[3]}";
+                result = TerminalHelper.executeCommand(command).replace("/", "");
+            } else {
+                command = androidToolsPath + File.separator + "adb" + deviceConnect
+                    + " shell dumpsys window windows | findstr 'mCurrentFocus|mFocusedApp' | ForEach-Object{($_ -split '\\s+')[2]}";
+                result = TerminalHelper.executeCommand(command).split("\n")[0];
+                result = result.substring(0, result.length() - 1);
+            }
         }
-
         
         String activity = getCurrentActivityImproved(androidSDKPath, "", devicePort, adbPort, device);
         String window = "";

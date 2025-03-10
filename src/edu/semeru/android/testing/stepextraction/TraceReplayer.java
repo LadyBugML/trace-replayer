@@ -226,7 +226,7 @@ public class TraceReplayer {
 		}
 
 		if (takeScreenshots) {
-			String screenshot = appPackage + "_" + appVersion + "_" + appName + sequence + ".png";
+			String screenshot = (appPackage + "_" + appVersion + "_" + appName + sequence + ".png").replace(" ", "_");
 			Utilities.getAndPullScreenshot(androidSDKPath, outputFolder + File.separator + "screenshots",
 					appPackage + "." + "User-Trace" + "." + +executionCtr + "." + screenshot);
 		}
@@ -331,12 +331,12 @@ public class TraceReplayer {
 							step.setTextEntry("none");
 							Thread.sleep(8000);
 
-							String screenshot = appPackage + "_" + appVersion + "_" + appName + sequence + ".png";
+							String screenshot = (appPackage + "_" + appVersion + "_" + appName + sequence + ".png").replace(" ", "_");
 
 							String currstep = Integer.toString(sequence - 1); // Here the current step is actually the
 																				// current sequence minus 1
 
-							String currscreenshot = appPackage + "_" + appVersion + "_" + appName + currstep + ".png";
+							String currscreenshot = (appPackage + "_" + appVersion + "_" + appName + currstep + ".png").replace(" ", "_");
 
 							Utilities.copyFiles(replayerFeatures.getUiDumpLocation() + (sequence - 1) + ".xml",
 									replayerFeatures.getUiDumpLocation() + sequence + ".xml");
@@ -381,13 +381,13 @@ public class TraceReplayer {
 								step.setTextEntry("none");
 								Thread.sleep(8000);
 
-								String screenshot = appPackage + "_" + appVersion + "_" + appName + sequence + ".png";
+								String screenshot = (appPackage + "_" + appVersion + "_" + appName + sequence + ".png").replace(" ", "_");
 
 								String currstep = Integer.toString(sequence - 1); // Here the current step is actually
 																					// the current sequence minus 1
 
-								String currscreenshot = appPackage + "_" + appVersion + "_" + appName + currstep
-										+ ".png";
+								String currscreenshot = (appPackage + "_" + appVersion + "_" + appName + currstep
+										+ ".png").replace(" ", "_");
 
 								if (isSearchActivity) {
 									Utilities.getAndPullScreenshot(androidSDKPath,
@@ -450,12 +450,12 @@ public class TraceReplayer {
 				}
 				Thread.sleep(8000);
 
-				String screenshot = appPackage + "_" + appVersion + "_" + appName + sequence + ".png";
+				String screenshot = (appPackage + "_" + appVersion + "_" + appName + sequence + ".png").replace(" ", "_");
 
 				String currstep = Integer.toString(sequence - 1); // Here the current step is actually the current
 																	// sequence minus 1
 
-				String currscreenshot = appPackage + "_" + appVersion + "_" + appName + currstep + ".png";
+				String currscreenshot = (appPackage + "_" + appVersion + "_" + appName + currstep + ".png").replace(" ", "_");
 
 				Utilities.getAndPullScreenshot(androidSDKPath, outputFolder + File.separator + "screenshots",
 						appPackage + "." + "User-Trace" + "." + +executionCtr + "." + screenshot);
@@ -477,7 +477,7 @@ public class TraceReplayer {
 				i++;
 			} else {
 				// To capture the latest screenshot during typing
-				String screenshot = appPackage + "_" + appVersion + "_" + appName + sequence + ".png";
+				String screenshot = (appPackage + "_" + appVersion + "_" + appName + sequence + ".png").replace(" ", "_");
 				Utilities.getAndPullScreenshot(androidSDKPath, outputFolder + File.separator + "screenshots",
 						appPackage + "." + "User-Trace" + "." + +executionCtr + "." + screenshot);
 			}
