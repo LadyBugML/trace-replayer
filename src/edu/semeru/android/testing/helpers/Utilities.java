@@ -1376,7 +1376,7 @@ public class Utilities {
                 result = result.substring(0, result.length() - 1);
             }
         } else {
-            if (getAndroidVersion(androidSDKPath).equals("10") || getAndroidVersion(androidSDKPath).equals("7.0")) {
+            if (getAndroidVersion(androidSDKPath).equals("10")) {
                 command = androidToolsPath + File.separator + "adb" + deviceConnect
                         + " shell dumpsys activity | findstr 'mResumedActivity' | ForEach-Object{($_ -split '\\s+')[3]}";
                 result = TerminalHelper.executeCommand(command).replace("/", "");
